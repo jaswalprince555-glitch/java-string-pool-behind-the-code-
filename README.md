@@ -1,2 +1,2 @@
-# java-string-pool-behind-the-code-
-An interactive visual project that show what happens behind the scenes when java creates and reuses strings
+Java String Pool, behind the code. This is an interactive visualization that helps you understand how Java manages strings behind the scenes. Instead of only seeing the syntax, you can follow how string literals are stored, reused, and referenced. I built this to make concepts like the string pool and the difference between references and values easier to see and remember. It walks through basic ideas like new string, string literals, and how equal text can still be different references. Live demo. View the interactive demo at your GitHub Pages URL.https://jaswalprince555-glitch.github.io/java-string-pool-behind-the-code-/
+
