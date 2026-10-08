@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Java String Pool — Interactive Explorer</title>
+<style>
+:root{
+  --bg:#08090d;--panel:#101218;--panel2:#151821;--line:#252a36;
+  --text:#f4f6fb;--muted:#9299aa;--accent:#8b5cf6;--accent2:#22d3ee;
+  --green:#34d399;--red:#fb7185;--shadow:0 24px 70px rgba(0,0,0,.42)
+}
+*{box-sizing:border-box} body{margin:0;background:
+radial-gradient(circle at 15% 5%,rgba(139,92,246,.16),transparent 28%),
+radial-gradient(circle at 85% 15%,rgba(34,211,238,.10),transparent 25%),var(--bg);
+color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+.app{max-width:1180px;margin:auto;padding:34px 22px 60px}
+header{display:flex;justify-content:space-between;gap:20px;align-items:flex-start;margin-bottom:25px}
+.kicker{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:#a78bfa;font-weight:800}
+h1{font-size:clamp(30px,5vw,58px);line-height:.98;margin:9px 0 12px;letter-spacing:-.045em}
+.sub{color:var(--muted);max-width:650px;line-height:1.6}
+.badge{border:1px solid var(--line);background:rgba(255,255,255,.035);padding:9px 13px;border-radius:999px;color:#b9c0ce;font-size:12px;white-space:nowrap}
+.shell{background:linear-gradient(180deg,rgba(255,255,255,.045),rgba(255,255,255,.018));border:1px solid var(--line);border-radius:28px;box-shadow:var(--shadow);overflow:hidden}
+.toolbar{display:flex;gap:8px;padding:10px;border-bottom:1px solid var(--line);background:rgba(8,9,13,.55);backdrop-filter:blur(18px)}
+.tab{flex:1;border:0;background:transparent;color:var(--muted);padding:13px 10px;border-radius:15px;cursor:pointer;font-weight:750;font-size:13px;transition:.25s}
+.tab:hover{color:var(--text);background:rgba(255,255,255,.04)}
+.tab.active{color:#fff;background:linear-gradient(135deg,rgba(139,92,246,.24),rgba(34,211,238,.10));box-shadow:inset 0 0 0 1px rgba(139,92,246,.28)}
+.content{padding:25px}
+.grid{display:grid;grid-template-columns:1fr 1.15fr;gap:18px}
+.card{border:1px solid var(--line);background:rgba(16,18,24,.82);border-radius:22px;padding:20px}
+.card h2{margin:0 0 5px;font-size:17px}.label{font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);font-weight:800}
+textarea{width:100%;min-height:190px;resize:vertical;background:#090b10;border:1px solid #272d3a;border-radius:16px;color:#dce3f0;padding:17px;font:14px/1.75 ui-monospace,SFMono-Regular,Menlo,monospace;outline:none}
+textarea:focus{border-color:#7150c9;box-shadow:0 0 0 4px rgba(139,92,246,.08)}
+button.primary{margin-top:12px;width:100%;padding:13px;border:0;border-radius:14px;background:linear-gradient(100deg,#7c3aed,#06b6d4);color:#fff;font-weight:850;cursor:pointer;box-shadow:0 10px 30px rgba(124,58,237,.18)}
+button.secondary{padding:10px 13px;border-radius:12px;border:1px solid var(--line);background:#151821;color:#dbe1ec;cursor:pointer}
+.status{display:flex;align-items:center;gap:9px;margin-top:14px;color:var(--muted);font-size:12px}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 13px var(--green)}
+.scene{min-height:270px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+.scene:before{content:"";position:absolute;width:280px;height:280px;border-radius:50%;background:rgba(139,92,246,.09);filter:blur(45px)}
+.pool{position:relative;width:min(430px,100%);border:1px solid #303646;border-radius:22px;background:linear-gradient(180deg,#171a23,#0d0f15);padding:18px;box-shadow:inset 0 1px rgba(255,255,255,.05)}
+.pooltitle{display:flex;justify-content:space-between;color:#aeb6c7;font-size:12px;margin-bottom:14px}
+.object{position:relative;border:1px solid rgba(139,92,246,.55);background:linear-gradient(135deg,rgba(139,92,246,.18),rgba(34,211,238,.07));padding:17px;border-radius:16px;animation:pop .45s ease both}
+.object strong{display:block;font:16px ui-monospace,monospace}.object small{color:var(--muted);display:block;margin-top:5px}
+.refs{display:grid;gap:10px;margin-top:15px}.ref{display:flex;align-items:center;gap:12px}
+.var{min-width:54px;font:700 13px ui-monospace,monospace;color:#c4b5fd}
+.line{height:1px;flex:1;background:linear-gradient(90deg,#7c3aed,#22d3ee);position:relative}.line:after{content:"";position:absolute;right:-1px;top:-4px;border-left:8px solid #22d3ee;border-top:4px solid transparent;border-bottom:4px solid transparent}
+.refbox{padding:9px 12px;border:1px solid #303646;border-radius:10px;font:12px ui-monospace,monospace;color:#cbd3e2}
+.info{margin-top:17px;padding:14px 16px;border-radius:15px;background:rgba(139,92,246,.07);border:1px solid rgba(139,92,246,.18);color:#b9c1d1;font-size:13px;line-height:1.6}
+.explain{margin-top:18px;display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.mini{border:1px solid var(--line);border-radius:16px;padding:14px;background:rgba(255,255,255,.018)}
+.mini b{display:block;font-size:12px;margin-bottom:5px}.mini span{color:var(--muted);font-size:12px;line-height:1.5}
+.footer{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-top:18px;color:var(--muted);font-size:12px}
+@keyframes pop{from{opacity:0;transform:translateY(10px) scale(.98)}to{opacity:1;transform:none}}
+@media(max-width:800px){.grid{grid-template-columns:1fr}.explain{grid-template-columns:1fr}header{display:block}.badge{display:inline-block;margin-top:15px}.content{padding:16px}}
+</style>
+</head>
+<body>
+<div class="app">
+<header>
+<div>
+<div class="kicker">JVM concept visualizer</div>
+<h1>Java String Pool<br><span style="background:linear-gradient(90deg,#c4b5fd,#67e8f9);-webkit-background-clip:text;color:transparent">under the hood.</span></h1>
+<div class="sub">A visual, interactive way to understand what happens when Java sees the same String literal — and why <code>==</code> behaves differently with <code>new String()</code>.</div>
+</div>
+<div class="badge">3 stages · interactive</div>
+</header>
+
+<div class="shell">
+<div class="toolbar">
+<button class="tab active" data-tab="source">01 · Source</button>
+<button class="tab" data-tab="pool">02 · String Pool</button>
+<button class="tab" data-tab="refs">03 · References</button>
+</div>
+
+<div class="content">
+<div class="grid">
+<section class="card">
+<div class="label">Input</div>
+<h2>Write the Java</h2>
+<p style="color:var(--muted);font-size:12px;line-height:1.5">Change the code and press Run. The visualization updates instantly.</p>
+<textarea id="code">String s1 = "Hello";
+String s2 = "Hello";</textarea>
+<button class="primary" id="run">Run visualization →</button>
+<div class="status"><span class="dot"></span><span id="status">Ready — press Run to trace the references.</span></div>
+</section>
+
+<section class="card">
+<div class="label" id="stageLabel">Stage 01</div>
+<h2 id="stageTitle">Source code</h2>
+<div class="scene" id="scene"></div>
+</section>
+</div>
+
+<div class="explain" id="explain"></div>
+
+<div class="footer">
+<span id="lesson">Start here: Java receives your source code.</span>
+<div style="display:flex;gap:7px">
+<button class="secondary" id="prev">← Back</button>
+<button class="secondary" id="next">Next →</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<script>
+const tabs=[...document.querySelectorAll('.tab')], scene=document.querySelector('#scene'), code=document.querySelector('#code');
+let stage=0, ran=false;
+const data=[
+ {title:'Source code',label:'Stage 01',lesson:'Start here: Java receives your source code.',
+  html:()=>`<div style="width:100%"><div class="pool"><div class="pooltitle"><span>JAVA SOURCE</span><span>input</span></div><pre style="margin:0;font:14px/1.8 ui-monospace,monospace;color:#dbe4f2;white-space:pre-wrap">${escapeHtml(code.value)}</pre></div><div class="info">This is the only part you write directly. Next, follow the literal <code>"Hello"</code> into the String Pool.</div></div>`},
+ {title:'String Pool',label:'Stage 02',lesson:'The identical literal can be reused instead of creating another pooled String.',
+  html:()=>{let n=code.value.includes('new String');return `<div class="pool"><div class="pooltitle"><span>STRING POOL</span><span>heap / interned literal</span></div><div class="object"><strong>"Hello"</strong><small>one pooled String object</small></div><div class="refs"><div class="ref"><span class="var">s1</span><div class="line"></div><span class="refbox">${n?'pooled literal':'same object'}</span></div><div class="ref"><span class="var">s2</span><div class="line"></div><span class="refbox">${n?'new object':'same object'}</span></div></div></div>`}},
+ {title:'References',label:'Stage 03',lesson:'Now the important distinction: object identity vs String content.',
+  html:()=>{let n=code.value.includes('new String');return `<div style="width:100%"><div class="pool"><div class="pooltitle"><span>REFERENCE VIEW</span><span>identity check</span></div><div class="refs" style="margin-top:0"><div class="ref"><span class="var">s1</span><div class="line"></div><span class="refbox">${n?'Object A':'Object A'}</span></div><div class="ref"><span class="var">s2</span><div class="line"></div><span class="refbox">${n?'Object B':'Object A'}</span></div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:18px"><div class="mini"><b>==</b><span style="font-size:22px;color:${n?'#fb7185':'#34d399'}">${n?'false':'true'}</span><br><span>compares references</span></div><div class="mini"><b>.equals()</b><span style="font-size:22px;color:#34d399">true</span><br><span>compares String content</span></div></div></div></div>`}}
+];
+function escapeHtml(s){return s.replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+function render(){
+ tabs.forEach((t,i)=>t.classList.toggle('active',i===stage));
+ document.querySelector('#stageLabel').textContent=data[stage].label;
+ document.querySelector('#stageTitle').textContent=data[stage].title;
+ scene.innerHTML=data[stage].html();
+ document.querySelector('#lesson').textContent=data[stage].lesson;
+ document.querySelector('#explain').innerHTML=[
+ `<div class="mini"><b>01 · Source</b><span>Your Java syntax contains String literals such as <code>"Hello"</code>.</span></div><div class="mini"><b>02 · Pool</b><span>Java can reuse an existing interned literal rather than duplicate it.</span></div><div class="mini"><b>03 · References</b><span><code>==</code> checks identity; <code>.equals()</code> checks String value.</span></div>`,
+ `<div class="mini"><b>Reuse</b><span>Two identical literals can point at one pooled object.</span></div><div class="mini"><b>Immutable</b><span>String immutability makes sharing safe.</span></div><div class="mini"><b>Memory</b><span>Pooling avoids unnecessary duplicate literal objects.</span></div>`,
+ `<div class="mini"><b>Same object</b><span>Literal + literal → <code>== true</code>.</span></div><div class="mini"><b>New object</b><span><code>new String()</code> creates another object.</span></div><div class="mini"><b>Best habit</b><span>Use <code>.equals()</code> when comparing String content.</span></div>`
+ ][stage];
+}
+tabs.forEach((t,i)=>t.onclick=()=>{stage=i;render()});
+document.querySelector('#next').onclick=()=>{stage=Math.min(2,stage+1);render()};
+document.querySelector('#prev').onclick=()=>{stage=Math.max(0,stage-1);render()};
+document.querySelector('#run').onclick=()=>{ran=true;stage=0;document.querySelector('#status').textContent='Trace complete — use the three tabs to explore it.';render()};
+render();
+</script>
+</body>
+</html>
